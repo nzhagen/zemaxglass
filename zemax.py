@@ -440,10 +440,6 @@ class ZemaxGlassLibrary(object):
             Whether to show the glass name labels near the data points.
         '''
 
-        if (prop1 not in ('n0','n1','n2','n3','nd','vd','cr','fr','ar','sr','pr','tce','density','dpgf')):
-            raise ValueError('The property "' + prop1 + '" is not a valid choice.')
-        if (prop2 not in ('n0','n1','n2','n3','nd','vd','cr','fr','ar','sr','pr','tce','density','dpgf')):
-            raise ValueError('The property "' + prop2 + '" is not a valid choice.')
         if (catalog == 'all'):
             catalogs = self.library.keys()
         else:
@@ -465,7 +461,7 @@ class ZemaxGlassLibrary(object):
                         print('Calculating dispersion coefficients for "' + glass + '" ...')
                         self.get_interp_dispersion(glass)
                     p1.append(self.library[cat][glass]['interp_coeffs'][idx])
-                elif (prop1 in ('nd','vd','cr','fr','ar','sr','pr','tce','density','dpgf')):
+                else:
                     p1.append(self.library[cat][glass][prop1])
 
                 if (prop2 in ('n0','n1','n2','n3')):
@@ -474,7 +470,7 @@ class ZemaxGlassLibrary(object):
                         print('Calculating dispersion coefficients for "' + glass + '" ...')
                         self.get_interp_dispersion(glass)
                     p2.append(self.library[cat][glass]['interp_coeffs'][idx])
-                elif (prop2 in ('nd','vd','cr','fr','ar','sr','pr','tce','density','dpgf')):
+                else:
                     p2.append(self.library[cat][glass][prop2])
 
         fig = plt.figure()
@@ -663,6 +659,7 @@ if (__name__ == '__main__'):
 
     glasslib.plot_dispersion('N-BK7')
     #plt.figure()
-    glasslib.plot_catalog_property_diagram('all', prop1='vd', prop2='nd')
+    #glasslib.plot_catalog_property_diagram('all', prop1='vd', prop2='nd')
     #glasslib.plot_catalog_property_diagram('schott', prop1='n0', prop2='n1')
+    glasslib.plot_catalog_property_diagram('all', prop1='nd', prop2='dispform')
     plt.show()
