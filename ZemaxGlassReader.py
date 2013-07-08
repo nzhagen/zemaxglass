@@ -3,7 +3,7 @@
 This file contains a set of utilities for reading Zemax glass (*.agf) files, analyzing glass
 properties, and displaying glass data.
 
-Note that the "library" is considered
+See LICENSE.txt for a description of the MIT/X license for this file.
 '''
 
 from numpy import *
@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.transforms
 from matplotlib.transforms import offset_copy
 import DataCursor
+import colorsys
 import pdb
 
 class ZemaxGlassLibrary(object):
@@ -26,23 +27,50 @@ class ZemaxGlassLibrary(object):
 
     Attributes
     ----------
-    ...
+    dir : str
+        The directory where the glass catalog files are stored.
+    catalog : float
 
     Methods
     -------
-    ...
+    pprint
+    simplify_schott_catalog
+    get_dispersion
+    get_polyfit_dispersion
+    cull_library
+
     '''
 
-    def __init__(self, dir, wavemin=400.0, wavemax=700.0, nwaves=300, catalog=None, sampling_domain='wavelength',
+    def __init__(self, dir=None, wavemin=400.0, wavemax=700.0, nwaves=300, catalog='all', sampling_domain='wavelength',
                  degree=3, debug=False):
+        '''
+        Initialize the glass library object.
+
+        Parameters
+        ----------
+        wavemin : float, optional
+            The shortest wavelength in the spectral region of interest.
+        wavemax : float, optional
+            The longest wavelength in the spectral region of interest.
+        nwaves : float, optional
+            The number of wavelength samples to use.
+        catalog : str
+            The catalog or list of catalogs to look for in "dir".
+        sampling_domain : str, {'wavelength','wavenumber'}
+            Whether to sample the spectrum evenly in wavelength or wavenumber.
+        degree : int, optional
+            The polynomial degree to use for fitting the dispersion spectrum.
+        '''
+
         self.debug = debug
-        self.dir = dir
-        self.wavemin = wavemin                  ## the minimum wavelength for performing fits to spectral property curves
-        self.wavemax = wavemax                  ## the maximum wavelength for performing fits to spectral property curves
-        self.nwaves = nwaves                    ## the number of wavelength/wavenumber samples to take for refractive index data
         self.degree = degree                    ## the degree of polynomial to use when fitting dispersion data
         #self.basis = basis                     ## the type of basis to use for polynomial fitting ('Taylor','Legendre')
         self.sampling_domain = sampling_domain  ## the domain ('wavelength' or 'wavenumber') in which to evenly sample the data
+
+        if (dir == None):
+            dir = os.path.dirname(__file__)
+
+        self.dir = dir
         self.library = read_library(dir, catalog=catalog)
 
         if (sampling_domain == 'wavelength'):
@@ -98,23 +126,37 @@ class ZemaxGlassLibrary(object):
             The name of the glass within the library to print.
         '''
 
-        for glasscat in self.library:
-            if (catalog != None) and (glasscat != catalog.lower()): continue
-            print(glasscat + ':')
-            for glassname in self.library[glasscat]:
+        if (catalog == None):
+            catalogs = self.library.keys()
+        elif (len(catalog) > 1) and isinstance(catalog, list):
+            catalogs = catalog
+        else:
+            catalogs = [catalog]
+
+        for catalog in self.library:
+            if (catalog not in catalogs): continue
+            print(catalog + ':')
+            for glassname in self.library[catalog]:
                 if (glass != None) and (glassname != glass.upper()): continue
-                glassdict = self.library[glasscat][glassname]
+                glassdict = self.library[catalog][glassname]
                 print('  ' + glassname + ':')
                 print('    nd       = ' + str(glassdict['nd']))
                 print('    vd       = ' + str(glassdict['vd']))
                 print('    dispform = ' + str(glassdict['dispform']))
-                print('    tce      = ' + str(glassdict['tce']))
-                print('    density  = ' + str(glassdict['density']))
-                print('    dpgf     = ' + str(glassdict['dpgf']))
-                print('    cd       = ' + str(glassdict['cd']))
-                print('    td       = ' + str(glassdict['td']))
-                print('    od       = ' + str(glassdict['od']))
-                print('    ld       = ' + str(glassdict['ld']))
+                if ('tce' in glassdict):
+                    print('    tce      = ' + str(glassdict['tce']))
+                if ('density' in glassdict):
+                    print('    density  = ' + str(glassdict['density']))
+                if ('dpgf' in glassdict):
+                    print('    dpgf     = ' + str(glassdict['dpgf']))
+                if ('cd' in glassdict):
+                    print('    cd       = ' + str(glassdict['cd']))
+                if ('td' in glassdict):
+                    print('    td       = ' + str(glassdict['td']))
+                if ('od' in glassdict):
+                    print('    od       = ' + str(glassdict['od']))
+                if ('ld' in glassdict):
+                    print('    ld       = ' + str(glassdict['ld']))
                 if ('interp_coeffs' in glassdict):
                     print('    coeffs   = ' + repr(glassdict['interp_coeffs']))
         return
@@ -178,17 +220,20 @@ class ZemaxGlassLibrary(object):
         return
 
     ## =========================
-    def get_dispersion(self, glass):
+    def get_dispersion(self, glass, catalog):
         '''
         For a given glass, calculate the dispersion curve (refractive index as a function of wavelength in nm).
 
         If sampling_domain=='wavenumber' then the curve is still returned in wavelength units, but the sampling
-        will be uniform in wavenumber and not uniform in wavelength.
+        will be uniform in wavenumber and not uniform in wavelength. Note that we need to know both the
+        catalog and the glass name, and not just the glass name, because some catalogs share the same glass names.
 
         Parameters
         ----------
         glass : str
             The name of the glass we want to know about.
+        catalog : str
+            The catalog containing the glass.
 
         Returns
         -------
@@ -196,7 +241,6 @@ class ZemaxGlassLibrary(object):
             A numpy array giving the sampled refractive index curve.
         '''
 
-        catalog = find_catalog_for_glassname(self.library, glass)
         if ('indices' in self.library[catalog][glass]):
             return(self.waves, self.library[catalog][glass]['indices'])
 
@@ -265,15 +309,19 @@ class ZemaxGlassLibrary(object):
             formula_rhs = cd[0] + (cd[1] * w**2) + (cd[2] * w**-2) + (cd[3] * w**-4) + (cd[4] * w**-6) + \
                           (cd[5] * w**-8) + (cd[6] * w**4) + (cd[7] * w**6)
             indices = sqrt(formula_rhs)
+        else:
+            print('Dispersion formula #' + str(dispform) + ' (for glass=' + glass + ' in catalog=' + catalog + ') is not a valid choice.')
+            indices = ones_like(w) * nan
+            #raise ValueError('Dispersion formula #' + str(dispform) + ' (for glass=' + glass + ' in catalog=' + catalog + ') is not a valid choice.')
 
         ## Zemax's dispersion formulas all use wavelengths in um. So, to compare "ld"
         ## and wavemin,wavemax we first convert the former to nm and then, when done
         ## we convert to um.
         if (amin(self.waves) < ld[0]*1000.0):
-            print('Truncating fitting range since wavemin=%f, but ld[0]=%f ...' % (self.wavemin, ld[0]))
+            print('Truncating fitting range since wavemin=%f, but ld[0]=%f ...' % (amin(self.waves), ld[0]))
             indices[self.waves < ld[0]*1000.0] = 0.0
         if (amax(self.waves) > ld[1]*1000.0):
-            print('Truncating fitting range since wavemax=%f, but ld[1]=%f ...' % (self.wavemax, ld[1]))
+            print('Truncating fitting range since wavemax=%f, but ld[1]=%f ...' % (amax(self.waves), ld[1]))
             indices[self.waves > ld[1]*1000.0] = 0.0
 
         ## Convert waves in um back to waves in nm for output.
@@ -281,70 +329,61 @@ class ZemaxGlassLibrary(object):
         return(self.waves, indices)
 
     ## =========================
-    def get_interp_dispersion(self, glass):
-        catalog = find_catalog_for_glassname(self.library, glass)
-        if ('interp_indices' in self.library[catalog][glass]):
-            return(self.waves, self.library[catalog][glass]['interp_indices'])
-
-        ## Generate a vector of wavelengths in nm, with samples every 1 nm.
-        (waves, indices) = self.get_dispersion(glass)
-
-        okay = (indices > 0.0)
-        coeffs = polyfit(waves[okay], indices[okay], self.degree)
-        coeffs = coeffs[::-1]       ## reverse the vector so that the zeroth degree coeff goes first
-        self.library[catalog][glass]['interp_coeffs'] = coeffs
-        #yyy
-        print('coeffs=', coeffs)
-
-        interp_indices = polyeval_Horner(waves, coeffs)
-        self.library[catalog][glass]['interp_indices'] = interp_indices
-
-        return(waves, interp_indices)
-
-    ## =============================================================================
-    def get_glassdata(self, glass):
+    def get_polyfit_dispersion(self, glass, catalog):
         '''
-        Get the dictionary describing a glass' optical properties.
+        Get the polynomial-fitted dispersion curve for a glass.
+
+        Note that we need to know both the catalog and the glass name, and not just the glass name,
+        because some catalogs share the same glass names.
 
         Parameters
         ----------
         glass : str
-            The name of the glass (in upper case).
-
-        Returns
-        -------
-        glassdict : dict
-            The glass property data. (Returns `None` if the glass is not found.
+            Which glass to analyze.
+        catalog : str
+            The catalog containing the glass.
         '''
 
-        catalog = find_catalog_for_glassname(self.library, glass)
-        if (catalog != None):
-            glassdict = self.library[catalog][glass]
-            return(glassdict)
-        return(None)
+        if ('interp_indices' in self.library[catalog][glass]):
+            return(self.waves, self.library[catalog][glass]['interp_indices'])
 
-#    ## =============================================================================
-#    def insert_dispersion_coeffs(self, catalog=None):
-#        '''
-#        Insert the dispersion coefficients into every glass in the library.
-#
-#        Parameters
-#        ----------
-#        catalog : str, optional
-#            The catalog to use if you want to insert dispersion coefficients in only one catalog and not the entire library.
-#        '''
-#
-#        for catalog in self.library:
-#            for glass in self.library[catalog]:
-#                self.get_interp_dispersion(glass)
-#
-#        return
+        ## Generate a vector of wavelengths in nm, with samples every 1 nm.
+        (waves, indices) = self.get_dispersion(glass, catalog)
+
+        okay = (indices > 0.0)
+        if not any(okay):
+            return(waves, ones_like(waves)*nan)
+
+        x = linspace(-1.0, 1.0, alen(waves[okay]))
+        coeffs = polyfit(x, indices[okay], self.degree)
+        coeffs = coeffs[::-1]       ## reverse the vector so that the zeroth degree coeff goes first
+        self.library[catalog][glass]['interp_coeffs'] = coeffs
+
+        interp_indices = polyeval_Horner(x, coeffs)
+        self.library[catalog][glass]['interp_indices'] = interp_indices
+
+        return(waves, interp_indices)
 
     ## =============================================================================
     def cull_library(self, key1, tol1, key2=None, tol2=None):
         '''
         Reduce all catalogs in the library such that no two glasses are simultaneously
         within (+/- tol1) of key1 and (+/- tol2) of key2.
+
+        Parameters
+        ----------
+        key1 : str
+            The first parameter to analyze. This can be, e.g., "nd" or "dispform". Any key in the \
+            glass data dictionary.
+        tol1 : float
+            The `tolerance` value: if the `key1` properties of any two glasses are within +/-tol1 \
+            of one another, then remove all but one from the library.
+        key2 : str
+            The second parameter to analyze.
+        tol2 : float
+            The second `tolerance` value: if the `key1` and `key2` properties of any two glasses \
+            are within +/-tol1 and +/-tol2 of one another simultaneously, then remove all but one \
+            such glass from the library.
         '''
 
         keydict1 = {}
@@ -355,7 +394,8 @@ class ZemaxGlassLibrary(object):
 
         for catalog in self.library:
             for glass in self.library[catalog]:
-                names.append(glass)
+                names.append(catalog+'_'+glass)
+                catalogs.append(catalog)
 
                 if (key1 in self.library[catalog][glass]):
                     keyval1.append(self.library[catalog][glass][key1])
@@ -368,36 +408,69 @@ class ZemaxGlassLibrary(object):
                     else:
                         keyval2.append(self.library[catalog][glass][None])
 
-        glasses_to_remove = []
+        names_to_remove = []
         keyval1 = array(keyval1)
         keyval2 = array(keyval2)
 
-        for i,glass in enumerate(names):
+        for i in arange(alen(names)):
             if (key2 == None):
                 idx = where(abs(keyval1[i] - keyval1) < tol1)
-                glasses_to_remove.append([name for name in names[idx] if name != names[i]])
+                names_to_remove.append([name for name in names[idx] if name != names[i]])
             else:
                 idx = where((abs(keyval1[i] - keyval1) < tol1) and (abs(keyval2 - keyval2[i]) < tol2))
                 #print('%3i %3i %5.3f %5.3f %6.3f %6.3f %12s %12s --> REMOVE %3i %12s' % (i, j, keyval1[i], keyval1[j], keyval2[i], keyval2[j], names_all[i], names_all[j], j, names_all[j]))
-                glasses_to_remove.append([name for name in names[idx] if name != names[i]])
+                names_to_remove.append([name for name in names[idx] if name != names[i]])
 
         ## Remove the duplicates from the "remove" list, and then delete those glasses
         ## from the glass catalog.
-        glasses_to_remove = unique(glasses_to_remove)
-        for glass in glasses_to_remove:
-            catalog = find_catalog_for_glassname(glass)
+        names_to_remove = unique(names_to_remove)
+        for glass in names_to_remove:
+            (catalog,glass) = glass.split('_')
             #print('i='+str(i)+': catalog='+catalog+'; glass='+name)
             del self.library[catalog][glass]
 
         return
 
     ## =========================
-    def plot_dispersion(self, glass):
-        (x, y) = self.get_dispersion(glass)
-        plt.plot(x, y)
+    def plot_dispersion(self, glass, catalog, polyfit=False, fiterror=False):
+        '''
+        Plot the glass refractive index curve as a function of wavelength.
+
+        Parameters
+        ----------
+        glass : str
+            The name of the glass to analyze.
+        catalog : str
+            The catalog containing the glass.
+        polyfit : bool
+            Whether to also display the polynomial fit to the curve.
+        fiterror : bool
+            If `polyfit` is True, then `fiterror` indicates whether a fitting error should also be \
+            displayed, using the LHS y-axis.
+        '''
+
+        (x, y) = self.get_dispersion(glass, catalog)
+        fig = plt.figure(figsize=(10,5))
+        ax = fig.add_subplot(111)
+        ax.plot(x, y, 'b-', linewidth=2)
+
+        if polyfit:
+            (x2, y2) = self.get_polyfit_dispersion(glass, catalog)
+            ax.plot(x2, y2, 'ko', markersize=4, zorder=0)
+
         plt.title(glass + ' dispersion')
         plt.xlabel('wavelength (nm)')
         plt.ylabel('refractive index')
+
+        if polyfit and fiterror:
+            fig.subplots_adjust(right=0.85)
+            F = plt.gcf()
+            (xsize,ysize) = F.get_size_inches()
+            fig.set_size_inches(xsize+5.0,ysize)
+            err = y2 - y
+            ax2 = ax.twinx()
+            ax2.set_ylabel('fit error')
+            ax2.plot(x2, err, 'r-')
 
         ## Enforce the plotting range.
         xmin = min(x)
@@ -414,12 +487,12 @@ class ZemaxGlassLibrary(object):
         ybot = ymin - (0.05 * yrange)
         ytop = ymax + (0.05 * yrange)
 
-        plt.axis([xbot,xtop,ybot,ytop])
+        ax.axis([xbot,xtop,ybot,ytop])
 
         return
 
     ## =========================
-    def plot_catalog_property_diagram(self, catalog, prop1='nd', prop2='vd', show_labels=True):
+    def plot_catalog_property_diagram(self, catalog='all', prop1='nd', prop2='vd', show_labels=True):
         '''
         Plot a scatter diagram of one glass property against another.
 
@@ -442,56 +515,70 @@ class ZemaxGlassLibrary(object):
 
         if (catalog == 'all'):
             catalogs = self.library.keys()
-        else:
+        elif isinstance(catalog, list) and (len(catalog) > 1):
+            catalogs = catalog
+        elif isinstance(catalog, str):
             catalogs = [catalog]
 
+        colors = get_colors(len(catalogs))
         glassnames = []
-        p1 = []
-        p2 = []
+        all_p1 = []
+        all_p2 = []
 
-        for cat in catalogs:
+        fig = plt.figure(figsize=(12,6))
+        ax = plt.gca()
+        ax.set_color_cycle(colors)
+
+        ## Collect lists of the property values for "prop1" and "prop2", one catalog at a time.
+        ## Plot each catalog separately, so that each can be displayed with unique colors.
+        for i,cat in enumerate(catalogs):
+            p1 = []
+            p2 = []
             for glass in self.library[cat]:
                 if (catalog == 'all') and (glass == 'AIR'): continue
                 if (catalog == 'all') and (abs(self.library[cat][glass]['vd']) < 1.0E-6): continue
                 glassnames.append(glass)
 
-                if (prop1 in ('n0','n1','n2','n3')):
+                if (prop1 in ('n0','n1','n2','n3','n4','n5','n6','n6','n8','n9')):
                     idx = int(prop1[1])
                     if ('interp_coeffs' not in self.library[cat][glass]):
                         print('Calculating dispersion coefficients for "' + glass + '" ...')
-                        self.get_interp_dispersion(glass)
-                    p1.append(self.library[cat][glass]['interp_coeffs'][idx])
+                        self.get_polyfit_dispersion(glass, cat)
+                    if ('interp_coeffs' in self.library[cat][glass]):
+                        p1.append(self.library[cat][glass]['interp_coeffs'][idx])
                 else:
                     p1.append(self.library[cat][glass][prop1])
 
-                if (prop2 in ('n0','n1','n2','n3')):
+                if (prop2 in ('n0','n1','n2','n3','n4','n5','n6','n6','n8','n9')):
                     idx = int(prop2[1])
                     if ('interp_coeffs' not in self.library[cat][glass]):
                         print('Calculating dispersion coefficients for "' + glass + '" ...')
-                        self.get_interp_dispersion(glass)
-                    p2.append(self.library[cat][glass]['interp_coeffs'][idx])
+                        self.get_polyfit_dispersion(glass, cat)
+                    if ('interp_coeffs' in self.library[cat][glass]):
+                        p2.append(self.library[cat][glass]['interp_coeffs'][idx])
                 else:
                     p2.append(self.library[cat][glass][prop2])
 
-        fig = plt.figure()
-        ax = plt.subplot(1,1,1)
-        ax.plot(p1, p2, 'bo', markersize=5)
+            plt.plot(p1, p2, 'o', markersize=5)
+            all_p1.extend(p1)
+            all_p2.extend(p2)
+
         #DataCursor.DataCursor([ax])     ## turn on the feature of getting a box pointing to data points
         plt.title('catalog "' + catalog + '": ' + prop1 + ' vs. ' + prop2)
         plt.xlabel(prop1)
         plt.ylabel(prop2)
 
         ## Enforce the plotting range.
-        xmin = min(p1)
-        xmax = max(p1)
+        xmin = min(all_p1)
+        xmax = max(all_p1)
         xrange = xmax - xmin
         if (xrange < 1.0): xrange = 1.0
         xbot = xmin - (0.05 * xrange)
         xtop = xmax + (0.05 * xrange)
         xdist = 0.01 * xrange               ## for plotting text near the data points
 
-        ymin = min(p2)
-        ymax = max(p2)
+        ymin = min(all_p2)
+        ymax = max(all_p2)
         yrange = ymax - ymin
         if (yrange < 1.0E-9): yrange = 1.0
         ybot = ymin - (0.05 * yrange)
@@ -499,13 +586,16 @@ class ZemaxGlassLibrary(object):
         ydist = 0.01 * yrange               ## for plotting text near the data points
 
         plt.axis([xbot,xtop,ybot,ytop])
+        leg = plt.legend(catalogs, prop={'size':10}, loc='best')
+        leg.draggable()
+        #leg = plt.legend(catalogs, prop={'size':10}, bbox_to_anchor=(1.2,1))
 
         if show_labels:
             ## Plot all of the glass labels offset by (5,5) pixels in (x,y) from the data point.
             trans_offset = offset_copy(ax.transData, fig=fig, x=5, y=5, units='dots')
             for i in arange(alen(glassnames)):
                 #print('i=%i: glassname=%s, p1=%f, p2=%f' % (i, glassnames[i], p1[i], p2[i]))
-                plt.text(p1[i], p2[i], glassnames[i], fontsize=7, zorder=0, transform=trans_offset)
+                plt.text(all_p1[i], all_p2[i], glassnames[i], fontsize=7, zorder=0, transform=trans_offset, color='0.5')
 
         return
 
@@ -514,7 +604,7 @@ class ZemaxGlassLibrary(object):
 ## End of ZemaxLibrary class
 ## =============================================================================
 
-def read_library(glassdir, catalog=None):
+def read_library(glassdir, catalog='all'):
     '''
     Get a list of all '*.agf' files in the directory, then call `parse_glassfile()` on each one.
 
@@ -539,13 +629,18 @@ def read_library(glassdir, catalog=None):
     glassdir = os.path.normpath(glassdir)
     files = glob.glob(os.path.join(glassdir,'*.[Aa][Gg][Ff]'))
 
+    if (len(catalog) > 1) and isinstance(catalog, list):
+        catalogs = catalog
+    else:
+        catalogs = [catalog]
+
     ## Get the set of catalog names. These keys will initialize the glasscat dictionary.
     glass_library = {}
 
     for f in files:
-        catalog_name = os.path.basename(f)[:-4]
-        if (catalog != None) and (catalog.lower() != catalog_name): continue
-        glass_library[catalog_name] = parse_glass_file(f)
+        this_catalog = os.path.basename(f)[:-4]
+        if (this_catalog.lower() not in catalogs) and (catalog != 'all'): continue
+        glass_library[this_catalog] = parse_glass_file(f)
 
     return(glass_library)
 
@@ -579,6 +674,7 @@ def parse_glass_file(filename):
             glass_catalog[glassname]['dispform'] = int(nm[2])
             glass_catalog[glassname]['nd'] = float(nm[4])
             glass_catalog[glassname]['vd'] = float(nm[5])
+            glass_catalog[glassname]['exclude_sub'] = int(nm[6])
             glass_catalog[glassname]['status'] = int(nm[7]) if (len(nm) >= 8) else 0
             glass_catalog[glassname]['meltfreq'] = int(nm[8]) if ((len(nm) >= 9) and (nm.count('-') < 0)) else 0
         elif line.startswith('ED '):
@@ -586,6 +682,7 @@ def parse_glass_file(filename):
             glass_catalog[glassname]['tce'] = float(ed[1])
             glass_catalog[glassname]['density'] = float(ed[3])
             glass_catalog[glassname]['dpgf'] = float(ed[4])
+            glass_catalog[glassname]['ignore_thermal_exp'] = int(ed[5])
         elif line.startswith('CD '):
             cd = line.split()[1:]
             glass_catalog[glassname]['cd'] = [float(a) for a in cd]
@@ -594,8 +691,16 @@ def parse_glass_file(filename):
             glass_catalog[glassname]['td'] = [float(a) for a in td]
         elif line.startswith('OD '):
             od = line.split()[1:]
-            if (od.count('-') > 0): od[od.index('-')] = '-1'
-            glass_catalog[glassname]['od'] = [float(a) for a in od]
+            od = string_list_to_float_list(od)
+            glass_catalog[glassname]['relcost'] = od[0]
+            glass_catalog[glassname]['cr'] = od[1]
+            glass_catalog[glassname]['fr'] = od[2]
+            glass_catalog[glassname]['sr'] = od[3]
+            glass_catalog[glassname]['ar'] = od[4]
+            if (len(od) == 6):
+                glass_catalog[glassname]['pr'] = od[5]
+            else:
+                glass_catalog[glassname]['pr'] = -1.0
         elif line.startswith('LD '):
             ld = line.split()[1:]
             glass_catalog[glassname]['ld'] = [float(a) for a in ld]
@@ -612,8 +717,55 @@ def parse_glass_file(filename):
 
     return(glass_catalog)
 
-## =============================================================================
+## =================================================================================================
+def string_list_to_float_list(x):
+    '''
+    Convert a list of strings to a list of floats, where a string value of '-' is mapped to a
+    floating point value of -1.0, and an empty input list produces a length-10 list of -1.0's.
+
+    Parameters
+    ----------
+    x : list
+        The list of strings to convert
+
+    Returns
+    -------
+    res : list of floats
+        The converted results.
+    '''
+    npts = len(x)
+    if (npts == 0) or ((npts == 1) and (x[0].strip() == '-')):
+        return([-1.0]*10)
+
+    res = []
+    for a in x:
+        if (a.strip() == '-'):
+            res.append(-1.0)
+        else:
+            res.append(float(a))
+
+    return(res)
+
+## =================================================================================================
 def find_catalog_for_glassname(glass_library, glassname):
+    '''
+    Search for the catalog containing a given glass.
+
+    Note that this is not a perfect solution --- it is common for multiple catalogs to share glass
+    names, and this function will only return the first one it finds.
+
+    Parameters
+    ----------
+    glass_library : ZemaxGlassLibrary
+        The glass library to search through.
+    glassname : str
+        The name of the glass to search for.
+
+    Returns
+    -------
+    catalog : str
+        The name of the catalog where the glass is found. If not found, then return None.
+    '''
     for catalog in glass_library:
         if glassname in glass_library[catalog]:
             return(catalog)
@@ -647,19 +799,52 @@ def polyeval_Horner(x, poly_coeffs):
         #print('n=%i, c=%f' % (n, coeffs[n]))
     return(p)
 
+## =================================================================================================
+def get_colors(num_colors):
+    '''
+    Make a list of 16 discernably different colors that can be used for drawing plots.
+
+    Returns
+    -------
+    mycolors : list of floats
+        A 16x4 list of colors, with each color being a 4-vector (R,G,B,A).
+    '''
+
+    mycolors = [None]*16
+    mycolors[0]  = [0.0,0.0,0.0,1.0]        ## black
+    mycolors[1]  = [1.0,0.0,0.0,1.0]        ## red
+    mycolors[2]  = [0.0,0.0,1.0,1.0]        ## blue
+    mycolors[3]  = [0.0,0.5,0.0,1.0]        ## dark green
+    mycolors[4]  = [1.0,0.5,0.0,1.0]        ## orange
+    mycolors[5]  = [0.0,0.5,0.5,1.0]        ## teal
+    mycolors[6]  = [1.0,0.0,1.0,1.0]        ## magenta
+    mycolors[7]  = [0.0,1.0,0.0,1.0]        ## lime green
+    mycolors[8]  = [0.5,0.5,0.0,1.0]        ## olive green
+    mycolors[9]  = [1.0,1.0,0.0,1.0]        ## yellow
+    mycolors[10] = [0.5,0.0,0.0,1.0]        ## maroon
+    mycolors[11] = [0.5,0.0,0.5,1.0]        ## purple
+    mycolors[12] = [0.7,0.7,0.7,1.0]        ## bright grey
+    mycolors[13] = [0.0,1.0,1.0,1.0]        ## aqua
+    mycolors[14] = [0.4,0.4,0.4,1.0]        ## dark grey
+    mycolors[15] = [0.0,0.0,0.5,1.0]        ## navy blue
+    return(mycolors[:num_colors])
 
 ## =============================================================================================
 if (__name__ == '__main__'):
-    glasslib = ZemaxGlassLibrary('/home/nh/Zemax/Glasscat/') #, catalog='schott')
-    print(glasslib.nglasses)
-    print(glasslib.catalogs)
+    #glasslib = ZemaxGlassLibrary('/home/repos/zemaxglass/', catalog='all')
+    glasslib = ZemaxGlassLibrary(degree=5)
+    print('Number of glasses found in the library: ' + str(glasslib.nglasses))
+    print('Glass catalogs found:', glasslib.catalogs)
     #print(glasslib.glasses)
-    #glasslib.pprint('schott')
-    #glasslib.pprint()
 
-    glasslib.plot_dispersion('N-BK7')
-    #plt.figure()
+    glasslib.plot_dispersion('N-BK7', 'schott')
+    glasslib.plot_dispersion('SF66', 'schott', polyfit=True, fiterror=True)
     #glasslib.plot_catalog_property_diagram('all', prop1='vd', prop2='nd')
+    #glasslib.plot_catalog_property_diagram('all', prop1='nd', prop2='dispform')
     #glasslib.plot_catalog_property_diagram('schott', prop1='n0', prop2='n1')
-    glasslib.plot_catalog_property_diagram('all', prop1='nd', prop2='dispform')
+    glasslib.plot_catalog_property_diagram('all', prop1='n0', prop2='n2')
+
+    #glasslib.pprint('schott')
+    glasslib.pprint()
+    #glasslib.pprint('schott','SF66')
     plt.show()

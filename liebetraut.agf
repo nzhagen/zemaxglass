@@ -1,3 +1,4 @@
+CC Zemax AGF file (www.radiantzemax.com)
 CC LIEBETRAUT Optical liquid refractive index models provided by: Peter Liebetraut et al, "Optical properties of liquids for fluidic optics," Applied Optics v.52 p.3203-3215 (2013).
 CC Note that this catalog does not have "Extra Data" (the "ED" row flag), Thermal Data (TD)
 NM ALDRICH-PDMS 2 000000.000 1.49910 36.89 0 1 -
@@ -40,7 +41,7 @@ NM FLUID-200 2 000000.000 1.39935 49.54 0 1 -
 CD 9.254E-01 0.0 1.18E-2 0.0 0.0 0.0
 LD 3.80000E-01 1.00000E+00
 NM GLYCEROL 2 000000.000 1.47096 61.17 0 1 -
-CD 1.1306E+00 0.0 9.8E-030.0 0.0 0.0
+CD 1.1306E+00 0.0 9.8E-03 0.0 0.0 0.0
 LD 3.80000E-01 1.00000E+00
 NM NAPHTHALDEHYDE 2 000000.000 1.6531 14.41 0 1 -
 CD 1.537E+00 0.0 3.9E-02 0.0 0.0 0.0
