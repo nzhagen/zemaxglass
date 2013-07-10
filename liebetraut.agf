@@ -1,4 +1,4 @@
-CC Zemax AGF file (www.radiantzemax.com)
+CC Zemax AGF file.
 CC LIEBETRAUT Optical liquid refractive index models provided by: Peter Liebetraut et al, "Optical properties of liquids for fluidic optics," Applied Optics v.52 p.3203-3215 (2013).
 CC Note that this catalog does not have "Extra Data" (the "ED" row flag), Thermal Data (TD)
 NM ALDRICH-PDMS 2 000000.000 1.49910 36.89 0 1 -
