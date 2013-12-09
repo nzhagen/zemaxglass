@@ -1,0 +1,6 @@
+TODO LIST
+=========
+
+#. Currently you get an error if you give it wavemin=400.0, wavemax=700.0 and then look into catalog='infrared'. Give it a more graceful means of erroring.
+
+ 
