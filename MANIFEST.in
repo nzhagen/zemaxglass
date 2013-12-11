@@ -1,0 +1,4 @@
+include ZemaxGlass.py
+include README.md
+include LICENSE.txt
+graft AGF_files
