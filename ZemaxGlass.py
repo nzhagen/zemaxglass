@@ -566,9 +566,12 @@ class ZemaxGlassLibrary(object):
                 else:
                     p2.append(self.library[cat][glass][prop2])
 
-            glassnames.append(glass)
-            p1.append(p1_coeffs)
-            p2.append(p2_coeffs)
+                glassnames.append(glass)
+
+            if (prop1 in ('n0','n1','n2','n3','n4','n5','n6','n6','n8','n9')):
+                p1.append(p1_coeffs)
+            if (prop2 in ('n0','n1','n2','n3','n4','n5','n6','n6','n8','n9')):
+                p2.append(p2_coeffs)
 
             plt.plot(p1, p2, 'o', markersize=5)
             all_p1.extend(p1)
@@ -858,7 +861,8 @@ if (__name__ == '__main__'):
     #glasslib.plot_catalog_property_diagram('all', prop1='nd', prop2='dispform')
     #glasslib.plot_catalog_property_diagram('schott', prop1='n0', prop2='n1')
 
-    glasslib.plot_catalog_property_diagram('all', prop1='n0', prop2='n1')
+    #glasslib.plot_catalog_property_diagram('all', prop1='n0', prop2='n1')
+    glasslib.plot_catalog_property_diagram('cdgm', prop1='vd', prop2='nd')
 
     #glasslib.pprint('schott')          ## print the glass info found in the Schott glass catalog
     glasslib.pprint()                   ## print the glass infor for the entire library of glasses
