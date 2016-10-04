@@ -1,10 +1,5 @@
 #! /usr/bin/env python
-'''
-This file contains a set of utilities for reading Zemax glass (*.agf) files, analyzing glass
-properties, and displaying glass data.
-
-See LICENSE.txt for a description of the MIT/X license for this file.
-'''
+# -*- coding: UTF-8 -*-
 
 from numpy import *
 import os, glob, sys
@@ -15,6 +10,17 @@ from matplotlib.transforms import offset_copy
 import colorsys
 import pdb
 from astropy.units.equivalencies import temperature
+
+'''
+This file contains a set of utilities for reading Zemax glass (*.agf) files, analyzing glass
+properties, and displaying glass data.
+
+See LICENSE.txt for a description of the MIT/X license for this file.
+'''
+
+__authors__ = 'Nathan Hagen'
+__license__ = 'MIT/X11 License'
+__contact__ = 'Nathan Hagen <and.the.light.shattered@gmail.com>'
 
 class ZemaxGlassLibrary(object):
     '''
