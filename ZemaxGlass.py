@@ -56,9 +56,9 @@ class ZemaxGlassLibrary(object):
         Parameters
         ----------
         wavemin : float, optional
-            The shortest wavelength in the spectral region of interest.
+            The shortest wavelength (nm) in the spectral region of interest.
         wavemax : float, optional
-            The longest wavelength in the spectral region of interest.
+            The longest wavelength (nm) in the spectral region of interest.
         nwaves : float, optional
             The number of wavelength samples to use.
         catalog : str
@@ -374,11 +374,11 @@ class ZemaxGlassLibrary(object):
         ## Zemax's dispersion formulas all use wavelengths in um. So, to compare "ld" with wavemin and wavemax, we need
         ## to multiply by 1000.
         if (amin(self.waves) < ld[0] * 1000.0):
-            print('Truncating fitting range since wavemin=%f, but ld[0]=%f ...' % (amin(self.waves), ld[0]))
-            indices[self.waves < ld[0] * 1000.0] = 0.0
+            print('Truncating fitting range since wavemin=%fum, but ld[0]=%fum ...' % (amin(self.waves)/1000.0, ld[0]))
+            indices[self.waves < ld[0] * 1000.0] = NaN
         if (amax(self.waves) > ld[1] * 1000.0):
-            print('Truncating fitting range since wavemax=%f, but ld[1]=%f ...' % (amax(self.waves), ld[1]))
-            indices[self.waves > ld[1] * 1000.0] = 0.0
+            print('Truncating fitting range since wavemax=%fum, but ld[1]=%fum ...' % (amax(self.waves)/1000.0, ld[1]))
+            indices[self.waves > ld[1] * 1000.0] = NaN
 
         ## Insert result back into the glass data. Do *not* do this if you want to be able to plot the temperature
         ## dependence of the refractive index.
@@ -582,7 +582,7 @@ class ZemaxGlassLibrary(object):
         return
 
     ## =========================
-    def plot_catalog_property_diagram(self, catalog = 'all', prop1 = 'nd', prop2 = 'vd', show_labels = True):
+    def plot_catalog_property_diagram(self, catalog='all', prop1='nd', prop2='vd', show_labels=True):
         '''
         Plot a scatter diagram of one glass property against another.
 
@@ -629,37 +629,44 @@ class ZemaxGlassLibrary(object):
                 if (catalog == 'all') and (abs(self.library[cat][glass]['vd']) < 1.0E-6): continue
 
                 if (prop1 in ('n0','n1','n2','n3','n4','n5','n6','n6','n8','n9')):
+                    j = int(prop1[1])
                     idx = int(prop1[1])
                     if ('interp_coeffs' not in self.library[cat][glass]):
                         print('Calculating dispersion coefficients for "' + glass + '" ...')
                         self.get_polyfit_dispersion(glass, cat)
+                        self.library[cat][glass][prop1] = self.library[cat][glass]['interp_coeffs'][j]
+                        print(glass, self.library[cat][glass]['interp_coeffs'])
+                        p2_coeffs = self.library[cat][glass]['interp_coeffs'][j]
                     if ('interp_coeffs' in self.library[cat][glass]):
                         p1_coeffs = self.library[cat][glass]['interp_coeffs'][idx]
+                        self.library[cat][glass][prop1] = self.library[cat][glass]['interp_coeffs'][j]
+                        p2_coeffs = self.library[cat][glass]['interp_coeffs'][j]
                     else:
                         print('Could not find valid interpolation coefficients for "' + glass + '" glass ...')
                         continue
                 else:
-                    p1.append(self.library[cat][glass][prop1])
+                    p2_coeffs = self.library[cat][glass]['interp_coeffs'][j]
 
                 if (prop2 in ('n0','n1','n2','n3','n4','n5','n6','n6','n8','n9')):
                     idx = int(prop2[1])
                     if ('interp_coeffs' not in self.library[cat][glass]):
                         print('Calculating dispersion coefficients for "' + glass + '" ...')
                         self.get_polyfit_dispersion(glass, cat)
+                        p2_coeffs = self.library[cat][glass]['interp_coeffs'][idx]
                     if ('interp_coeffs' in self.library[cat][glass]):
                         p2_coeffs = self.library[cat][glass]['interp_coeffs'][idx]
                     else:
                         print('Could not find valid interpolation coefficients for "' + glass + '" glass ...')
                         continue
                 else:
-                    p2.append(self.library[cat][glass][prop2])
+                    p2_coeffs = self.library[cat][glass]['interp_coeffs'][j]
 
                 glassnames.append(glass)
 
-            if (prop1 in ('n0','n1','n2','n3','n4','n5','n6','n6','n8','n9')):
-                p1.append(p1_coeffs)
-            if (prop2 in ('n0','n1','n2','n3','n4','n5','n6','n6','n8','n9')):
-                p2.append(p2_coeffs)
+                if (prop1 in ('n0','n1','n2','n3','n4','n5','n6','n6','n8','n9')):
+                    p1.append(p1_coeffs)
+                if (prop2 in ('n0','n1','n2','n3','n4','n5','n6','n6','n8','n9')):
+                    p2.append(p2_coeffs)
 
             plt.plot(p1, p2, 'o', markersize=5)
             all_p1.extend(p1)
@@ -1013,9 +1020,9 @@ if (__name__ == '__main__'):
     print(glasslib.catalogs)
     # glasslib.plot_catalog_property_diagram('all', prop1='vd', prop2='nd')
     # glasslib.plot_catalog_property_diagram('all', prop1='nd', prop2='dispform')
-    # glasslib.plot_catalog_property_diagram('schott', prop1='n0', prop2='n1')
+    glasslib.plot_catalog_property_diagram('schott', prop1='n0', prop2='n1')
     # glasslib.plot_catalog_property_diagram('all', prop1='n0', prop2='n1')
-    glasslib.plot_catalog_property_diagram('cdgm', prop1='vd', prop2='nd')
+    #glasslib.plot_catalog_property_diagram('cdgm', prop1='vd', prop2='nd')
 
     ## Demonstrate how to pretty-print glass data.
     # glasslib.pprint('schott')          ## print all the glass info found in the Schott glass catalog
@@ -1024,9 +1031,12 @@ if (__name__ == '__main__'):
 
     ## Now show something in the infrared.
     print('Now analyzing the "Infrared" glass catalog ...')
-    glasslib = ZemaxGlassLibrary(degree=5, wavemin=7500.0, wavemax=14500.0, catalog='infrared')
+    glasslib = ZemaxGlassLibrary(degree=5, wavemin=7500.0, wavemax=12000.0, catalog='infrared')
     print('Number of glasses found in the library: ' + str(glasslib.nglasses))
     print('Glass catalogs found:', glasslib.catalogs)
     glasslib.plot_dispersion('ZNS_BROAD', 'infrared')
+
+    #glasslib = ZemaxGlassLibrary(wavemin=7000.0, wavemax=12000.0, catalog='temp')
+    #glasslib.plot_catalog_property_diagram('temp', prop1='n0', prop2='n1')
 
     plt.show()
