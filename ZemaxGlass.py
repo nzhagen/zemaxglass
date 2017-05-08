@@ -779,12 +779,12 @@ def parse_glass_file(filename):
             nm = line.split()
             glassname = nm[1]
             glass_catalog[glassname] = {}
-            glass_catalog[glassname]['dispform'] = int(nm[2]) #int(float(nm[2]))
+            glass_catalog[glassname]['dispform'] = int(nm[2])
             glass_catalog[glassname]['nd'] = float(nm[4])
             glass_catalog[glassname]['vd'] = float(nm[5])
-            glass_catalog[glassname]['exclude_sub'] = 0 if (len(nm) < 7) else int(nm[6]) #int(float(nm[6]))
-            glass_catalog[glassname]['status'] = 0 if (len(nm) < 8) else int(nm[7]) #int(float(nm[7]))
-            glass_catalog[glassname]['meltfreq'] = 0 if ((len(nm) < 9) or (nm.count('-') > 0)) else int(nm[8]) #int(float(nm[8]))
+            glass_catalog[glassname]['exclude_sub'] = 0 if (len(nm) < 7) else int(nm[6])
+            glass_catalog[glassname]['status'] = 0 if (len(nm) < 8) else int(nm[7])
+            glass_catalog[glassname]['meltfreq'] = 0 if ((len(nm) < 9) or (nm.count('-') > 0)) else int(nm[8])
         elif line.startswith('ED '):
             ed = line.split()
             glass_catalog[glassname]['tce'] = float(ed[1])
