@@ -4,7 +4,7 @@ from distutils.core import setup
 setup(
     name = "ZemaxGlass",
     py_modules = ["ZemaxGlass"],
-    version = "1.0",
+    version = "1.1",
     description = "Zemax glass (.agf) file reader",
     author = "Nathan Hagen",
     author_email = "nhagen@optics.arizona.edu",
@@ -28,6 +28,7 @@ of glasses from them. A complete library is included with the repository. This a
 users to plot the dispersion curves of glasses, and to visually compare the properties of all
 glasses in the library against one another. (See the user manual for details.)
 
+Version 1.1 includes extension by Michael Deiml
 This version requires Python 2.7 or later.
 """
 )
