@@ -79,7 +79,7 @@ class ZemaxGlassLibrary(object):
 
         self.dir = dir
         self.library = read_library(dir, catalog=catalog)
-        self.pressure_ref = 0.10113e6  ## the dispersion measurement reference pressure, in Pascals
+        self.pressure_ref = 1.0113e5   ## the dispersion measurement reference pressure, in Pascals
         self.temp_ref = 20.0           ## the dispersion measurement reference temperature, in degC
 
         if (sampling_domain == 'wavelength'):
