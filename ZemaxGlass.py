@@ -251,9 +251,9 @@ class ZemaxGlassLibrary(object):
         catalog : str
             The catalog containing the glass.
         T : float, optional
-            The temperature of the lens environment.
+            The temperature of the lens environment, in degC.
         P : float, optional
-            The pressure of the lens environment, e.g. air at normal conditions. For vacuum set this value to zero.
+            The pressure of the lens environment in Pascals, e.g. air at normal conditions. For vacuum set this value to zero.
 
         Returns
         -------
