@@ -696,7 +696,7 @@ class ZemaxGlassLibrary(object):
 
         plt.axis([xbot,xtop,ybot,ytop])
         leg = plt.legend(catalogs, prop={'size':10}, loc='best')
-        leg.draggable()
+        leg.set_draggable(True)
         #leg = plt.legend(catalogs, prop={'size':10}, bbox_to_anchor=(1.2,1))
 
         if show_labels:
