@@ -770,7 +770,7 @@ def parse_glass_file(filename):
         The dictionary containing glass data for all classes in the file.
     '''
 
-    f = open(filename, 'r')
+    f = open(filename, 'r', encoding='latin1')
     glass_catalog = {}
 
     for line in f:
