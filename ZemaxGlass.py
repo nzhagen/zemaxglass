@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.transforms
 from matplotlib.transforms import offset_copy
 import colorsys
+from cycler import cycler
 import pdb
 
 '''
@@ -617,7 +618,7 @@ class ZemaxGlassLibrary(object):
 
         fig = plt.figure(figsize=(12,6))
         ax = plt.gca()
-        ax.set_color_cycle(colors)
+        ax.set_prop_cycle(cycler('color', colors))
 
         ## Collect lists of the property values for "prop1" and "prop2", one catalog at a time.
         ## Plot each catalog separately, so that each can be displayed with unique colors.
@@ -632,10 +633,10 @@ class ZemaxGlassLibrary(object):
                     j = int(prop1[1])
                     idx = int(prop1[1])
                     if ('interp_coeffs' not in self.library[cat][glass]):
-                        print('Calculating dispersion coefficients for "' + glass + '" ...')
+                        #print('Calculating dispersion coefficients for "' + glass + '" ...')
                         self.get_polyfit_dispersion(glass, cat)
                         self.library[cat][glass][prop1] = self.library[cat][glass]['interp_coeffs'][j]
-                        print(glass, self.library[cat][glass]['interp_coeffs'])
+                        #print(glass, self.library[cat][glass]['interp_coeffs'])
                         p2_coeffs = self.library[cat][glass]['interp_coeffs'][j]
                     if ('interp_coeffs' in self.library[cat][glass]):
                         p1_coeffs = self.library[cat][glass]['interp_coeffs'][idx]
@@ -650,7 +651,7 @@ class ZemaxGlassLibrary(object):
                 if (prop2 in ('n0','n1','n2','n3','n4','n5','n6','n6','n8','n9')):
                     idx = int(prop2[1])
                     if ('interp_coeffs' not in self.library[cat][glass]):
-                        print('Calculating dispersion coefficients for "' + glass + '" ...')
+                        #print('Calculating dispersion coefficients for "' + glass + '" ...')
                         self.get_polyfit_dispersion(glass, cat)
                         p2_coeffs = self.library[cat][glass]['interp_coeffs'][idx]
                     if ('interp_coeffs' in self.library[cat][glass]):
