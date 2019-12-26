@@ -797,6 +797,7 @@ def parse_glass_file(filename):
             glass_catalog[glassname]['cd'] = [float(a) for a in cd]
         elif line.startswith('TD '):
             td = line.split()[1:]
+            if not td: continue     ## the Schott catalog sometimes uses an empty line for the "TD" label
             glass_catalog[glassname]['td'] = [float(a) for a in td]
         elif line.startswith('OD '):
             od = line.split()[1:]
