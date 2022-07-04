@@ -194,23 +194,23 @@ class ZemaxGlassLibrary(object):
 
         ## Remove the "inquiry glasses".
         I_glasses = ['FK3', 'N-SK10', 'N-SK15', 'BAFN6', 'N-BAF3', 'N-LAF3', 'SFL57', 'SFL6', 'SF11', 'N-SF19', 'N-PSK53', 'N-SF64', 'N-SF56', 'LASF35']
-        num_i = alen(I_glasses)
+        num_i = len(I_glasses)
 
         ## Remove the "high-transmission" duplications of regular glasses.
         H_glasses = ['LF5HT', 'BK7HT', 'LLF1HT', 'N-SF57HT', 'SF57HT', 'LF6HT', 'N-SF6HT', 'F14HT', 'LLF6HT', 'SF57HHT', 'F2HT', 'K5HT', 'SF6HT', 'F8HT', 'K7HT']
-        num_h = alen(H_glasses)
+        num_h = len(H_glasses)
 
         ## Remove the "soon-to-be-inquiry" glasses from the Schott catalog.
         N_glasses = ['KZFSN5', 'P-PK53', 'N-LAF36', 'UBK7', 'N-BK7']
-        num_n = alen(N_glasses)
+        num_n = len(N_glasses)
 
         ## Remove the Zinc-sulfide and zinc selenide glasses.
         ZN_glasses = ['CLEARTRAN_OLD', 'ZNS_VIS']
-        num_zn = alen(ZN_glasses)
+        num_zn = len(ZN_glasses)
 
         ## "zealous": remove the "P" glasses specifically designed for hot press molding, and several glasses that are nearly identical to others in the catalog.
         Z_glasses = ['N-F2', 'N-LAF7', 'N-SF1', 'N-SF10', 'N-SF2', 'N-SF4', 'N-SF5', 'N-SF57', 'N-SF6', 'N-ZK7', 'P-LASF50', 'P-LASF51', 'P-SF8', 'P-SK58A', 'P-SK60']
-        num_z = alen(Z_glasses)
+        num_z = len(Z_glasses)
 
         for glass in schott_glasses:
             remove = (glass in I_glasses) or (glass in H_glasses) or (glass in N_glasses) or (glass in ZN_glasses)
@@ -413,7 +413,7 @@ class ZemaxGlassLibrary(object):
         if not any(okay):
             return(waves, ones_like(waves) * NaN)
 
-        x = linspace(-1.0, 1.0, alen(waves[okay]))
+        x = linspace(-1.0, 1.0, len(waves[okay]))
         coeffs = polyfit(x, indices[okay], self.degree)
         coeffs = coeffs[::-1]       ## reverse the vector so that the zeroth degree coeff goes first
         self.library[catalog][glass]['interp_coeffs'] = coeffs
@@ -471,7 +471,7 @@ class ZemaxGlassLibrary(object):
         keyval1 = array(keyval1)
         keyval2 = array(keyval2)
 
-        for i in arange(alen(names)):
+        for i in arange(len(names)):
             if (key2 == None):
                 idx = where(abs(keyval1[i] - keyval1) < tol1)
                 names_to_remove.append([name for name in names[idx] if name != names[i]])
@@ -702,7 +702,7 @@ class ZemaxGlassLibrary(object):
         if show_labels:
             ## Plot all of the glass labels offset by (5,5) pixels in (x,y) from the data point.
             trans_offset = offset_copy(ax.transData, fig=fig, x=5, y=5, units='dots')
-            for i in arange(alen(glassnames)):
+            for i in arange(len(glassnames)):
                 #print('i=%i: glassname=%s, p1=%f, p2=%f' % (i, glassnames[i], p1[i], p2[i]))
                 plt.text(all_p1[i], all_p2[i], glassnames[i], fontsize=7, zorder=0, transform=trans_offset, color='0.5')
 
@@ -909,8 +909,8 @@ def polyeval_Horner(x, poly_coeffs):
         The polynomial evaluated at the points given in x.
     '''
 
-    ncoeffs = alen(poly_coeffs)
-    p = zeros(alen(x))
+    ncoeffs = len(poly_coeffs)
+    p = zeros(len(x))
     for n in arange(ncoeffs-1,-1,-1):
         p = poly_coeffs[n] + (x * p)
         #print('n=%i, c=%f' % (n, coeffs[n]))
