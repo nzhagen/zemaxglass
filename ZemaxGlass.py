@@ -329,7 +329,7 @@ class ZemaxGlassLibrary(object):
             L = 1.0 / (w**2 - 0.028)
             indices = cd[0] + (cd[1] * L) + (cd[2] * L**2) + (cd[3] * w**2) + (cd[4] * w**4) + (cd[5] * w**6)
         elif (dispform == 4):  ## Sellmeier2
-            formula_rhs = cd[0] + (cd[1] / (w**2 - (cd[2])**2)) + (cd[3] * w**2 / (w**2 - (cd[4])**2))
+            formula_rhs = cd[0] + (cd[1] * w**2 / (w**2 - (cd[2])**2)) + (cd[3] / (w**2 - (cd[4])**2))
             indices = sqrt(formula_rhs + 1.0)
         elif (dispform == 5):  ## Conrady
             indices = cd[0] + (cd[1] / w) + (cd[2] / w**3.5)
