@@ -702,6 +702,8 @@ def parse_glass_input(input_str):
 
     input_lines = []
     for line in input_str.splitlines():
+        if len(line)>0 and line[0] == '!':
+            continue
         if line[:2] in ['Re', 'CC', 'NM', 'GC', 'ED', 'CD', 'TD', 'MD', 'OD', 'LD', 'IT', 'BD']:
             input_lines.append(line)
         else:  # no label, treat as continuation of previous line
