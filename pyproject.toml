@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "ZemaxGlass"
 description = "Zemax glass (.agf) file reader"
 readme = "README.md"
-version = "2.0.0a2"
+version = "2.0.0a3"
 
 license = "MIT"
 license-files = ["LICENSE.txt",]
@@ -44,6 +44,9 @@ Documentation = "https://github.com/nzhagen/zemaxglass/ZemaxGlass_user_manual.pd
 
 [project.optional-dependencies]
 testing = [ "setuptools", "pytest", "pytest-cov",]
+
+[project.gui-scripts]
+zemaxglassdemo = "ZemaxGlass.ZemaxGlass:main"
 
 [tool.setuptools]
 include-package-data = true

@@ -1079,8 +1079,7 @@ def interp1d(x_old, y_old, x_new, **kwargs):
     return(y_new)
 
 ## =============================================================================================
-if (__name__ == '__main__'):
-
+def main():
     glasslib = ZemaxGlassLibrary(catalog='schott', wavemin=400.0, wavemax=700.0, nwaves=100)
 
     print('Number of glasses found in the library: ' + str(glasslib.nglasses))
@@ -1124,3 +1123,7 @@ if (__name__ == '__main__'):
     #glasslib.plot_catalog_property_diagram('temp', prop1='n0', prop2='n1')
 
     plt.show()
+
+
+if (__name__ == '__main__'):
+    sys.exit(main())
