@@ -1,12 +1,12 @@
 [build-system]
-requires = ["setuptools>=80", "setuptools-scm>=8"]
+requires = ["setuptools>=82.0.1", "setuptools-scm>=10.0.5"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ZemaxGlass"
 description = "Zemax glass (.agf) file reader"
 readme = "README.md"
-version = "2.0.0a3"
+version = "2.0.0a4"
 
 license = "MIT"
 license-files = ["LICENSE.txt",]
@@ -30,9 +30,9 @@ keywords = [ "zemax", "glass", "spectra", "dispersion",]
 requires-python = ">=3.12"
 
 dependencies = [ 
-    "numpy>=2.4.3", 
+    "numpy>=2.4.6", 
     "scipy>=1.17.1", 
-    "matplotlib>=3.10.8", 
+    "matplotlib>=3.10.9", 
     "cycler>=0.12.1",
 ]
 
