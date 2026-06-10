@@ -680,7 +680,7 @@ def parse_glass_file(filename):
     '''
 
     glass_catalog = {}
-    encodings = ['utf-16', 'utf-8', 'utf-8-sig', 'iso-8859-1', 'latin1']
+    encodings = ['utf-8', 'utf-16', 'utf-8-sig', 'iso-8859-1', 'latin1']
 
     for decode in encodings:
         try:
