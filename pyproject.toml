@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=82.0.1", "setuptools-scm>=10.0.5"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ZemaxGlass"
+description = "Zemax glass (.agf) file reader"
+readme = "README.md"
+version = "2.0.0a4"
+
+license = "MIT"
+license-files = ["LICENSE.txt",]
+
+authors = [
+    {name = "Nathan Hagen", email = "and.the.light.shattered@gmail.com"},
+]
+
+classifiers = [ 
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Development Status :: 4 - Beta",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+]
+keywords = [ "zemax", "glass", "spectra", "dispersion",]
+
+requires-python = ">=3.12"
+
+dependencies = [ 
+    "numpy>=2.4.6", 
+    "scipy>=1.17.1", 
+    "matplotlib>=3.10.9", 
+    "cycler>=0.12.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/nzhagen/zemaxglass"
+Documentation = "https://github.com/nzhagen/zemaxglass/ZemaxGlass_user_manual.pdf"
+"Bug Tracker" = "https://github.com/nzhagen/zemaxglass/issues"
+"Source Code" = "https://github.com/nzhagen/zemaxglass"
+
+[project.optional-dependencies]
+testing = [ "setuptools", "pytest", "pytest-cov",]
+
+[project.gui-scripts]
+zemaxglassdemo = "ZemaxGlass.ZemaxGlass:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.package-data]
+data = [ "AGF_files/*", ]
+
+[tool.setuptools_scm]
+
+[tool.pytest.ini_options]
+addopts = "--verbose"
+norecursedirs = [ "dist", "build",]
+testpaths = [ "tests",]

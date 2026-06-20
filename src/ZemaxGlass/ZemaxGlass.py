@@ -680,7 +680,7 @@ def parse_glass_file(filename):
     '''
 
     glass_catalog = {}
-    encodings = ['utf-16', 'utf-8', 'utf-8-sig', 'iso-8859-1', 'latin1']
+    encodings = ['utf-8', 'utf-16', 'utf-8-sig', 'iso-8859-1', 'latin1']
 
     for decode in encodings:
         try:
@@ -698,10 +698,20 @@ def parse_glass_file(filename):
 ## =============================================================================
 def parse_glass_input(input_str):
 
+    def int_cast(i: str) -> int:
+        """Handle case where an integer input str is encoded as floating point."""
+        try:
+            i_val = int(i)
+        except ValueError as ve:
+            i_val = int(float(i))
+        return i_val
+    
     glass_catalog = {}
 
     input_lines = []
     for line in input_str.splitlines():
+        if len(line)>0 and line[0] == '!':
+            continue
         if line[:2] in ['Re', 'CC', 'NM', 'GC', 'ED', 'CD', 'TD', 'MD', 'OD', 'LD', 'IT', 'BD']:
             input_lines.append(line)
         else:  # no label, treat as continuation of previous line
@@ -714,12 +724,12 @@ def parse_glass_input(input_str):
             nm = line.split()
             glassname = nm[1]
             glass_catalog[glassname] = {}
-            glass_catalog[glassname]['dispform'] = int(nm[2])
+            glass_catalog[glassname]['dispform'] = int_cast(nm[2])
             glass_catalog[glassname]['nd'] = float(nm[4])
             glass_catalog[glassname]['vd'] = float(nm[5])
-            glass_catalog[glassname]['exclude_sub'] = 0 if (len(nm) < 7) else int(nm[6])
-            glass_catalog[glassname]['status'] = 0 if (len(nm) < 8) else int(nm[7])
-            glass_catalog[glassname]['meltfreq'] = 0 if ((len(nm) < 9) or (nm.count('-') > 0)) else int(nm[8])
+            glass_catalog[glassname]['exclude_sub'] = 0 if (len(nm) < 7) else int_cast(nm[6])
+            glass_catalog[glassname]['status'] = 0 if (len(nm) < 8) else int_cast(nm[7])
+            glass_catalog[glassname]['meltfreq'] = 0 if ((len(nm) < 9) or (nm.count('-') > 0)) else int_cast(nm[8])
         elif line.startswith('ED '):
             ed = line.split()
             glass_catalog[glassname]['tce'] = float(ed[1])
@@ -1069,8 +1079,7 @@ def interp1d(x_old, y_old, x_new, **kwargs):
     return(y_new)
 
 ## =============================================================================================
-if (__name__ == '__main__'):
-
+def main():
     glasslib = ZemaxGlassLibrary(catalog='schott', wavemin=400.0, wavemax=700.0, nwaves=100)
 
     print('Number of glasses found in the library: ' + str(glasslib.nglasses))
@@ -1114,3 +1123,7 @@ if (__name__ == '__main__'):
     #glasslib.plot_catalog_property_diagram('temp', prop1='n0', prop2='n1')
 
     plt.show()
+
+
+if (__name__ == '__main__'):
+    sys.exit(main())

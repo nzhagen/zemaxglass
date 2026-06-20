@@ -1,1 +1,8 @@
 *.pyc
+build/
+dist/
+temp/
+.vscode/
+**/__pycache__/
+*.egg-info/
+*.ipynb*
