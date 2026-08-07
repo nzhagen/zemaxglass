@@ -1,12 +1,12 @@
 [build-system]
-requires = ["setuptools>=82.0.1", "setuptools-scm>=10.0.5"]
+requires = ["setuptools>=83.0.0", "setuptools-scm>=10.2.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ZemaxGlass"
 description = "Zemax glass (.agf) file reader"
 readme = "README.md"
-version = "2.0.0"
+version = "2.0.1"
 
 license = "MIT"
 license-files = ["LICENSE.txt",]
@@ -53,9 +53,6 @@ include-package-data = true
 
 [tool.setuptools.package-dir]
 "" = "src"
-
-[tool.setuptools.package-data]
-data = [ "AGF_files/*", ]
 
 [tool.setuptools_scm]
 
